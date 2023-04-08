@@ -4,15 +4,18 @@
       <div v-for="message in state.messages" :key="message.id">
         <div class="message">
           <div>
-            <div class="title">{{ message.question }}</div>
-            <pre><div class="message-text">{{ message.answer }}</div><div class="message-time">{{ message.time }}</div></pre>
+            <div class="title">Q: {{ message.question }}</div>
+            <div class="content">
+              A:
+              <pre><div class="message-text">{{ message.answer }}</div></pre>
+            </div>
           </div>
         </div>
       </div>
     </div>
     <div class="input-box">
       <input type="text" v-model="state.currentQuestion" @keydown.enter="queryAnswer()">
-      <button @click="queryAnswer()">Send</button>
+      <button :disabled="state.currentDisabled" @click="queryAnswer()">Send</button>
     </div>
   </div>
 </template>
@@ -23,26 +26,33 @@ import { getAnswer } from '@/api/chat.js'
 
 const state = reactive({
   currentQuestion: "",
+  currentDisabled: false,
   messages: []
 
 })
+let messageLength = 1;
 function queryAnswer() {
-  console.log("test")
-  getAnswer({question: state.currentQuestion}).then((res) => {
-    console.log(res.data)
+  if (state.currentQuestion == '') {
+    return;
+  }
+  state.currentDisabled = true;
+  messageLength++;
+  let currentQ = state.currentQuestion;
+  getAnswer({ question: currentQ }).then((res) => {
     if (res.data) {
-      console.log(res.data)
       let message = {
-        id: state.messages.length + 1,
-        answer: state.currentQuestion,
-        question: state.currentQuestion,
+        id: messageLength,
+        question: currentQ,
       }
-      message.answer = res.data.msg
-      state.messages.push(message)
-      state.currentQuestion = ""
+      // console.log(res.data)
+      state.messages.push(message);
+      message.answer = res.data.msg;
+      state.currentQuestion = "";
+      state.currentDisabled = false;
     }
 
   })
+
 }
 </script>
   
@@ -60,11 +70,24 @@ function queryAnswer() {
 .messages {
   flex: 1;
   overflow-y: scroll;
+  font-size: 16px;
+}
+
+.messages pre {
+  margin: 0;
+  line-height: 20px;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+
 }
 
 .message {
-  /* display: flex;
-  flex-direction: column; */
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
   margin-bottom: 10px;
   text-align: left;
 }
